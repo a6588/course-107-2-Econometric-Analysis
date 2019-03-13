@@ -38,12 +38,16 @@ library("knitr")
 ```
 
 
+```{r}
+
+data("Journals")
+```
 # dataframe物件
 
 
 ```{r}
 #if follow usage,
-mutate(journals,citeprice=price/citations)->journals
+mutate(Journals,citeprice=price/citations)->journals
 #pipe expression
 Journals %>% mutate(citeprice=price/citations)->journals
 
