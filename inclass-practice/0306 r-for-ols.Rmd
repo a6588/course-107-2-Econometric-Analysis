@@ -162,7 +162,7 @@ mutate(Journals, citeprice=price/citations)
 #此時會發現 變數數目仍為10。
 #在r裡面當我們想將某個新的物件存下來，需要用到箭頭"->"  
 ```
-```{r}
+```{r mutate put in somewhere}
 mutate(Journals, citeprice=price/citations)->Journals
 #若想在原本的Journals內增加的話 就"->Journals"，則此時變數數量從10→11
 #箭頭反過來謝也是一樣的
@@ -185,6 +185,29 @@ Journals %>% mutate(citeprice=price/citations) -> journals
 summary(journals)
 
 ```
+
+##0313
+##幾乎所有第一個進去的都要是 data frame → mutate(data,...)
+##點點點可為欲加入的新變數
+
+```{r}
+#所以若follow上述mutate的規定 182-187應為
+mutate(Journals,citeprice=price/citations)->journals
+#data frame in, data frame out (Journals→journals)：一定要利用箭頭->存入 否則產生的新變數無用
+
+#"pipe expression"：用pipe寫法，我的data frame(Journals)是可以拿出來的，pipe(%>%)後面接 我要做的動作。
+
+#R：只要是未完成的指令皆可隨意換行
+
+Journals %>%
+  mutate(
+    citeprice=price/citations
+    )->
+  journals
+
+```
+
+
 
 # 因果問句
 
