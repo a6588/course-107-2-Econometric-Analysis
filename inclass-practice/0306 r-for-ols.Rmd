@@ -88,10 +88,13 @@ a<-"a"
 #若我想看a現在被當作什麼，我就可以用str(a)來查一下
 str(a)
 ```
-#變數可以有很多種類型 
+變數可以有很多種類型 
 此處的 chr "a" 中的chr是其中一類,是CHARACTER的意思。 
 
-#若現在我想知道物件的內容(現在有兩個物件 一個為JOURNAL,一個為a，直接點他就會有資料跳出來是一個方法)可直接在螢幕上打
+現在有兩個物件：一個為JOURNAL,一個為a
+若我想知道物件的內容，方法(1)可直接在這裡呼叫 
+                      方法(2)，直接點他就會有資料跳出來
+
 ```{r}
 Journals
 ```
@@ -171,12 +174,15 @@ Journals<- dplyr::mutate(Journals, citeprice=price/citations)
 #有時會需要加註namespace 表示這需要在某個特定環境下被執行(不常出現~但有時還是有可能會用到)
 ```
 
+```{r}
+data("Journals")
+```
+
 
 ```{r ch2-summary, results='hide'}
 #講義上的
-Journals%>%mutate(citeprice=price/citation)->
-  journals  
-summarry(journals)
+Journals %>% mutate(citeprice=price/citations) -> journals  
+summary(journals)
 
 ```
 
