@@ -76,10 +76,9 @@ Journals$publisher<-as.character(Journals$publisher)
 #若我引入的變數類別有誤、或是我希望它變成其他類別，我可用 objectName<-as.{theClassYouWant}(objectName)此時我會發現 右邊欄位的類別已變成我想要的類別,
 ```
 
-
-
-
-
+```{r}
+Journals$publisher<-as.factor(Journals$publisher)
+```
 
 ```{r}
 a<-"a"
@@ -134,8 +133,50 @@ ThisIsANewObject<-`a`
 
 # 資料處理：產生新變數 dplyr::mutate
 
-```{r ch2-summary, results='hide'}
+$$citeprice=\frac{price}{citation}$$
 
+```{r traditional mutate}
+#傳統的寫法
+Journals$citeprice<- Journals$price/Journals$citations
+#此時會發現 右邊欄位出現citeprice 類別是num(numaric class 因為不是整數) 變數數目從原本的10→11
+```
+
+```{r mutate}
+mutate(Journals,citeprice=price/citations)
+#用此方法就不用像上面的traditional mutate打很多次journal
+```
+```{r transmute}
+transmute(Journals, citeprice=price/citations)
+#transmute只會出現我要的那個變數
+```
+```{r}
+data("Journals")
+#重新呼叫一次這份資料 看變數 數目的變動(變數數目還原為10)
+```
+
+```{r}
+mutate(Journals, citeprice=price/citations)
+#此時會發現 變數數目仍為10。
+#在r裡面當我們想將某個新的物件存下來，需要用到箭頭"->"  
+```
+```{r}
+mutate(Journals, citeprice=price/citations)->Journals
+#若想在原本的Journals內增加的話 就"->Journals"，則此時變數數量從10→11
+#箭頭反過來謝也是一樣的
+Journals<-mutate(Journals, citeprice=price/citations)
+```
+
+```{r}
+Journals<- dplyr::mutate(Journals, citeprice=price/citations)
+#有時會需要加註namespace 表示這需要在某個特定環境下被執行(不常出現~但有時還是有可能會用到)
+```
+
+
+```{r ch2-summary, results='hide'}
+#講義上的
+Journals%>%mutate(citeprice=price/citation)->
+  journals  
+summarry(journals)
 
 ```
 
