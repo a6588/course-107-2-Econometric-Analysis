@@ -436,7 +436,7 @@ stargazer(model1, model2,
             model2CoeftestDF$std.error
             ),
           type="html",
-          align=TRUE)    #???not work?!!!
+          align=TRUE)   
 ```
 standard error: tidy2
 ```{r}
@@ -446,5 +446,5 @@ stargazer(model1, model2,
             tidy(model2_coeftest)$std.error
             ),
           type="html",
-          align=TRUE)        #????not work!!!!!
+          align=TRUE)       
 ```
