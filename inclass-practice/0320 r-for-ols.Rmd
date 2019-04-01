@@ -291,8 +291,19 @@ journals %>%
 
 > 單純比較不同「期刊價格」(citeprice)的期刊所獨得的圖書館「訂閱數」(subs)變化並無法反應真正的「期刊價格」效應，原因是「立足點」並不與「期刊價格」獨立。
 
-> 這裡「立足點」指得是什麼？
+當解釋變數並非直接代表沒有受試的DUMMY VARIABLE(只有0或1的可能值)，
+可以用以下的間斷例子來思考回歸模型係數的涵義：
 
+假設$P_i$就只有高價($P_H$)及低價($P_L$)兩種，$Y_{Hi},Y_{Li}$分別代表期刊$i$在高價及低價的訂閱量，我們觀察到的定量只會是$Y_{Hi},Y_{Li}$其中一個，我們可以將$Y_i$與$P_i$寫成如下的效應關係：(#\：左上右下的斜線)
+
+$$Y_i=Y_{Li}+\frac{Y_{Hi}-Y_{Li}}{P_H-P_L}(P_i-P_L)$$
+若假設價格對每個期刊帶來的單位變化固定，即:
+$$\frac{Y_{Hi}-Y_{Li}}{P_H-P_L}=\beta_1^*$$
+則$$Y_i=Y_{Li}+\beta_1^*(P_i-P_L)$$
+
+> 這裡「立足點」指得是什麼？
+       
+  低價格下的訂閱數(包含高價格期刊若採低價格的訂閱情境)
 
 # 進階關連分析
 
@@ -308,14 +319,132 @@ journals %>%
 > 承上題，單純比較「期刊引用單價」高低間的「訂閱數量」差別，所估算出來的價格效果以絕對值來看會高估、還是低估？為什麼？
 
 # 複迴歸模型
+?lm→lm(formula, data,...,method="qr",....)其中有等號的可忽略，可不理會 但必要時還是要自行看一下default("=");
+看Argument
+formula→regression model;subset→optional表示可自己決定要不要給
+
+▲在R裡面，"=="可用來判斷符不符合某個條件；但若遇到 NA(Not Available)時要特別注意，一定要用is.na()去處理：
+```{r}
+a<-NA #假設今天有個值剛好是NA，我不想要這個值進來
+```
 
 ```{r}
+is.na(a) #則我一定要用is.na()來判斷他。顯示TRUE 表示a is not available
+```
+```{r}
+a=="NA" #不能用"a是否=NA"，因為a本身的內容是NA(去除資料)，所以一個不知道是什麼東西的東西(a)，也是有可能等於NA這個字串或別的，因此R給我的答案也會是NA
+```
 
+```{r lm traditional}
+lm(log(subs)~log(citeprice),data=journals) #~→回歸模型中的"等號"
+```
 
+```{r lm pipe1}
+log(subs)~log(citeprice) %>%
+  lm(data=journals)
+```
+```{r lm pipe2}
+journals %>% 
+  lm(log(subs)~log(citeprice),data=.)->
+  model1
+
+journals %>%
+  lm(log(subs)~log(citeprice)+foundingyear,data=.)->
+  model2
+
+#除了condition在價格的變化，又加入了FY
+```
+
+## broom
+→分析工具，省得在下方的視窗一個一個打ex)summary(model1)
+  broom是為了串接dplyr而寫的工具，所以出來的結構也是 data frame。只要是data frame 就能進行 mutate, select, filter...
+  
+  *tidy()
+  *augment()
+  *glance()
+```{r broom}
+library(broom)
+```
+
+```{r broom tidy}
+tidy(model1)
+#標準誤等
+```
+```{r broom augment}
+augment(model1)
+#有hat的在此,針對每個樣本點
+```
+```{r broom glance}
+glance(model1)
+#r square等等，整個model的診斷
+```
+```{r}
+tidy(model2)
 ```
 
 ## 模型比較
 
-```{r ols-comp-r, results='hide', warning=FALSE}
+*library(sandwich)→
+*library(lmtest)
+ library(stargazer)→只是為了產生一個好看的報表，暫時不管
 
+```{r ols-comp-r, results='hide', warning=FALSE}
+journals %>%
+  lm(log(subs)~log(citeprice),data=.)->
+  model1
+journals %>%
+  lm(log(subs)~log(citeprice)+foundingyear,data=.)->
+  model2
+
+library(sandwich)
+library(lmtest)
+library(stargazer)
+
+
+#使用vcovHC函數來計算HC1型的異質變異（即橫斷面資料下的線性迴歸模型）
+coeftest(model1, vcov. = vcovHC, type="HC1") -> model1_coeftest #此物件為矩陣
+coeftest(model2, vcov. = vcovHC, type="HC1") -> model2_coeftest 
+```
+
+standard error原始作法:使用矩陣
+!!!此處下了 results='asis'能使輸出為一個表格，其餘沒下的的皆為亂碼，可knit看看
+
+```{r, results='asis'}
+stargazer(model1, model2, 
+          se=list(model1_coeftest[,"Std. Error"], model2_coeftest[,2]),
+          type="html",
+          align=TRUE)  
+```
+表格出來後
+
+
+standard erroe: tidy1
+
+```{r se**}
+#亦可寫成
+tidy(model1_coeftest)
+tidy(model2_coeftest)
+```
+```{r **}
+#存起來
+tidy(model1_coeftest)-> model1CoeftestDF
+tidy(model2_coeftest)-> model2CoeftestDF
+
+stargazer(model1, model2, 
+          se=list(
+            model1CoeftestDF$std.error,
+            model2CoeftestDF$std.error
+            ),
+          type="html",
+          align=TRUE)    #???not work?!!!
+```
+standard error: tidy2
+```{r}
+stargazer(model1, model2, 
+          se=list(
+            tidy(model1_coeftest)$std.error,
+            tidy(model2_coeftest)$std.error
+            ),
+          type="html",
+          align=TRUE)        #????not work!!!!!
 ```
