@@ -1,0 +1,192 @@
+---
+title: "R for TSLS"
+author: "姓名"
+date: "3/6/2019"
+output: 
+  html_document: 
+    toc: true
+    toc_depth: 3
+    number_sections: true
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval=T)
+```
+
+```{r set up}
+##4.1
+#引入資料整理套件dplyr
+library(dplyr)
+library(magrittr)
+
+#引入可做TSLS的套件
+library(AER)
+
+#引入AER裡附帶的CigarettesSW資料
+data("CigarettesSW")
+```
+```{r}
+class(CigarettesSW)
+```
+↑which means 任何跟data有關的操作都試用
+
+as_tibble():改變class或增加class特性
+```{r}
+#串接
+CigarettesSW %>% as_tibble()-> CigarettesSW
+
+#非串接:常用的寫法
+as_tibble(CigarettesSW) ->CigarettesSW
+```
+
+```{r data structure observation}
+##4.2
+#轉換資料成dplyr下的tibble格式，比較容易看資料狀態。
+
+CigarettesSW %<>% as_tibble()
+
+CigarettesSW %>% as_tibble()-> CigarettesSW
+#↑這兩個是一樣的
+
+#只取1995資料，因為我們還沒學到追蹤資料的處理。
+```
+```{r}
+CigarettesSW %>% filter(year=="1995")->
+  CigarettesSW
+```
+```{r}
+CigarettesSW %<>% filter(year=="1995")
+```
+
+```{r}
+CigarettesSW %>%
+  mutate(
+    rprice=price/cpi,
+    rincome=income/(population*cpi),
+    tdiff=(taxs-tax)/cpi
+  )-> CigarettesSW
+```
+```{r}
+model1<- log(packs)~log(rprice)
+model2<- log(packs)~log(rprice)+log(rincome)
+
+```
+```{r no constant}
+model1noConstant<-
+  log(packs)~log(rprice)+0
+
+model2<- log(packs)~log(rprice)+log(rincome)-1
+```
+
+```{r}
+class(model1)
+```
+#ols
+```{r}
+ols1<-lm(model1,CigarettesSW)
+ols2<-lm(model2,CigarettesSW)
+
+summary(ols1)
+summary(ols2)
+```
+
+```{r}
+library(sandwich)
+library(lmtest)
+library(stargazer)
+
+#使用vcovHC函數來計算HC1型的異質變異數(即橫斷面資料下的線性回歸模型)
+coeftest(ols1,vcov. = vcovHC,type="HC1")->ols1_coeftest
+
+coeftest(ols2, vcov. = vcovHC,type="HC1")->ols2_coeftest
+
+```
+```{r}
+ols1_coeftest
+ols2_coeftest
+```
+```{r}
+ols1
+ols1_coeftest
+```
+```{r, results="asis"}
+
+stargazer(ols1_coeftest,ols2_coeftest,
+          se=list(ols1_coeftest[,"Std. Error"], ols2_coeftest[,2]),
+          type="html",
+          align=TRUE)
+```
+```{r tsls}
+tsls_1iv<- ivreg(
+  log(packs)~log(rprice)+log(rincome)|log(rincome)+tdiff,
+  data=CigarettesSW
+)
+
+tsls_2iv<- ivreg(
+  log(packs)~log(rprice)+log(rincome)|log(rincome)+tdiff+I(tax/cpi),
+  data=CigarettesSW
+)
+```
+
+```{r}
+library(broom)
+broom::glance(tsls_1iv)
+```
+```{r}
+broom::augment(tsls_1iv)
+```
+```{r}
+broom::tidy(tsls_1iv)
+```
+```{r}
+summary(tsls_1iv)
+```
+```{r}
+class(tsls_1iv)
+```
+
+#sargan test:exclusive test
+```{r 假設檢定}
+summary(tsls_1iv, vcov = sandwich, diagnostics = TRUE, df=Inf) -> tsls_1iv_tests
+summary(tsls_2iv, vcov = sandwich, diagnostics = TRUE, df=Inf) -> tsls_2iv_tests
+```
+```{r}
+summary(tsls_1iv, vcov. = sandwich,diagnostics = TRUE,df=Inf)
+
+#此處m=k，無法進行sargan test
+```
+```{r}
+#這裡多一個工具變數(為了做sargan test)
+summary(tsls_2iv, vcov = sandwich, diagnostics = TRUE, df=Inf)
+```
+
+
+
+
+
+
+
+
+
+
+
+(1)只要pvalue沒有打星星(小)就表示它reject虛無假設
+H_1:strong IV
+
+(2)sargon test : H_o→殘差與z是獨立的
+沒有星星
+表示它不reject虛無假設
+表示確實與殘差事無關的(獨立)
+
+(3)HOUSMAN:小的PVALUE永遠拒絕H_0
+
+所以三關的檢定都過了
+
+~ivreg的class叫iv regression 才能用summary的方式
+
+~但若為ols 不可能在summary裡面做調整
+
