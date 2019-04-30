@@ -51,6 +51,10 @@ $$y=\beta_1*x_6$$
 data("Journals")
 ```
 
+```{r}
+Journals %<>% mutate(citeprice=price/citations)
+```
+
 
 > Journal這個dataframe的結構(structure)是什麼？有幾個變數？每個變數物件的類別(class)又是什麼？
 
@@ -179,6 +183,7 @@ data("Journals")
 ```
 
 
+
 ```{r ch2-summary, results='hide'}
 #講義上的
 Journals %>% mutate(citeprice=price/citations) -> journals  
@@ -209,8 +214,6 @@ Journals %>%
   journals
 
 ```
-
-
 
 # 因果問句
 

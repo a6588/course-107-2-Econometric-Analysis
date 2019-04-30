@@ -123,6 +123,7 @@ stargazer(ols1_coeftest,ols2_coeftest,
 ```{r tsls}
 tsls_1iv<- ivreg(
   log(packs)~log(rprice)+log(rincome)|log(rincome)+tdiff,
+  
   data=CigarettesSW
 )
 
